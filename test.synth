@@ -1,7 +1,9 @@
-function _square F X * RATE % RATE / 0.5 > 2 * -1 +
-function _sin 2 PI * X RATE / * F * sin
-function _saw F X * RATE % RATE / 2 * -1 +
-function shit 50 X _square F X _square * 25 X _square F 100 + X _square * 12.5 X _square F 200 + X _square * + + 3 /
+function _saw F X * RATE % RATE / 
+function _square F X _saw 0.5 >
+function _sin 2 PI * X RATE / * F * sin 1 + 2 /
+function _phase X RATE /
+function attack X LEN /
+function shit X LEN 4 / < 1 + F * X _sin
 track shit
 body
-++abedaedcabededcb
+- b  d  e  d  b  g  e  d  b  d  e  g  i  g  e  d  b  d  e  d  b  g  e  d  a  b  d  e  g  i  e  d

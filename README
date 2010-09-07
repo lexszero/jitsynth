@@ -1,3 +1,11 @@
 Usage example:
 	./synth < test.synth | aplay -c1 -r 44100 -f S16
 
+Pre-defined variables:
+	F - note frequency
+	X - sample number from the beginning of note
+	LEN - note length in samples
+
+Constants:
+	RATE - sample rate
+	PI - pi constant

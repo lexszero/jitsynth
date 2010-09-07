@@ -55,11 +55,12 @@ typedef struct track_t {
 jit_function_t parse_function(char **str) {
 	char *t;
 
-	jit_type_t params[2] = {jit_type_float64, jit_type_nuint},
-			   signature = jit_type_create_signature(jit_abi_cdecl, jit_type_float64, params, 2, 1);
+	jit_type_t params[3] = {jit_type_float64, jit_type_nuint, jit_type_nuint},
+			   signature = jit_type_create_signature(jit_abi_cdecl, jit_type_float64, params, 3, 1);
 	jit_function_t func = jit_function_create(jit_context, signature);
 	jit_value_t val_freq = jit_value_get_param(func, 0),
 				val_sample = jit_value_get_param(func, 1),
+				val_length = jit_value_get_param(func, 2),
 				const_rate = jit_value_create_float64_constant(func, jit_type_float64, (double)RATE),
 				const_pi = jit_value_create_float64_constant(func, jit_type_float64, (double)M_PI),
 				arg1, arg2;
@@ -68,24 +69,25 @@ jit_function_t parse_function(char **str) {
 
 	jit_function_t func1;
 	while ((t = token(str)) != NULL) {
-		if (STRNEQ(t, "F", 1)) {
-			LOGF("F");
+		if (STRNEQ(t, "F", 1))
 			stack_push(valstack, val_freq);
-		}
-		else if (STRNEQ(t, "X", 1)) {
-			LOGF("X");
+		else if (STRNEQ(t, "X", 1))
 			stack_push(valstack, val_sample);
-		}
-		else if (STRNEQ(t, "RATE", 4)) {
-			LOGF("RATE");
+		else if (STRNEQ(t, "LEN", 3))
+			stack_push(valstack, val_length);
+		else if (STRNEQ(t, "RATE", 4))
 			stack_push(valstack, const_rate);
-		}
 		else if (STRNEQ(t, "PI", 2))
 			stack_push(valstack, const_pi);
-		else if (STRNEQ(t, "*", 1))
-			stack_push(valstack, jit_insn_mul(func, stack_pop(valstack), stack_pop(valstack)));
 		else if (STRNEQ(t, "+", 1))
 			stack_push(valstack, jit_insn_add(func, stack_pop(valstack), stack_pop(valstack)));
+		else if (STRNEQ(t, "-", 1)) {
+			arg1 = stack_pop(valstack);
+			arg2 = stack_pop(valstack);
+			stack_push(valstack, jit_insn_sub(func, arg2, arg1));
+		}
+		else if (STRNEQ(t, "*", 1))
+			stack_push(valstack, jit_insn_mul(func, stack_pop(valstack), stack_pop(valstack)));
 		else if (STRNEQ(t, "/", 1)) {
 			arg1 = stack_pop(valstack);
 			arg2 = stack_pop(valstack);
@@ -96,14 +98,22 @@ jit_function_t parse_function(char **str) {
 			arg2 = stack_pop(valstack);
 			stack_push(valstack, jit_insn_rem(func, arg2, arg1));
 		}
+		else if (STRNEQ(t, ">", 1)) {
+			arg1 = stack_pop(valstack);
+			arg2 = stack_pop(valstack);
+			stack_push(valstack, jit_insn_gt(func, arg1, arg2));
+		}
+		else if (STRNEQ(t, "<", 1)) {
+			arg1 = stack_pop(valstack);
+			arg2 = stack_pop(valstack);
+			stack_push(valstack, jit_insn_lt(func, arg1, arg2));
+		}
 		else if (STRNEQ(t, "sin", 3))
 			stack_push(valstack, jit_insn_sin(func, stack_pop(valstack)));
-		else if (STRNEQ(t, ">", 1))
-			stack_push(valstack, jit_insn_gt(func, stack_pop(valstack), stack_pop(valstack)));
 		else if ((func1 = get_function_by_name(t)) != NULL) {
 			arg1 = stack_pop(valstack);
 			arg2 = stack_pop(valstack);
-			jit_value_t args[2] = {arg1, arg2};
+			jit_value_t args[3] = {arg1, arg2, val_length};
 			LOGF("calling %s", t);
 			stack_push(
 					valstack,
@@ -113,9 +123,8 @@ jit_function_t parse_function(char **str) {
 						func1,
 						NULL,
 						args,
-						2,
+						3,
 						0));
-
 		}
 		else 
 			stack_push(valstack, jit_value_create_float64_constant(func, jit_type_float64, atof(t)));
@@ -173,30 +182,38 @@ int main() {
 	jit_context_build_end(jit_context);
 
 	jit_float64 result,
-				freq,
-				cur_note_freq;
+				freq;
 	jit_nuint	sample,
 				cur_note_len;
-	void *args[2] = { &freq, &sample };
+	void *args[3] = { &freq, &sample, &cur_note_len};
 
 	int16_t raw_sample;
 
 	int set_note_len = 2;
+	cur_note_len = note_len(set_note_len);
 
 	char ch;
 	while ((ch = fgetc(stdin)) != EOF) {
-		if (ch == '+')
-			cur_note_len--;
-		else if (ch == '-')
-			cur_note_len++;
-		else if (ch >= 'a' && ch <= 'z') {
+		if (ch == '+') {
+			set_note_len--;
 			cur_note_len = note_len(set_note_len);
+		}
+		else if (ch == '-') {
+			set_note_len++;
+			cur_note_len = note_len(set_note_len);
+		}
+		else if (ch == ' ') {
+			raw_sample = 0;
+			for (sample = 0; sample < cur_note_len; sample++) 
+				write(1, &raw_sample, 2);
+		}
+		else if (ch >= 'a' && ch <= 'z') {
 			freq = note_freq(ch-'a');
 			LOGF("note %f %i", freq, cur_note_len);
 			for (sample = 0; sample < cur_note_len; sample++) {
 				jit_function_apply(track.instrument, args, &result);
 				//LOGF("f(%i, %i) = %f", freq, sample, result);
-				raw_sample = result*32767;
+				raw_sample = result*65535;
 				write(1, &raw_sample, 2);
 			}
 		}
