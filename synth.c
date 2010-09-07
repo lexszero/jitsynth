@@ -55,7 +55,7 @@ typedef struct track_t {
 jit_function_t parse_function(char **str) {
 	char *t;
 
-	jit_type_t params[2] = {jit_type_nuint, jit_type_nuint},
+	jit_type_t params[2] = {jit_type_float64, jit_type_nuint},
 			   signature = jit_type_create_signature(jit_abi_cdecl, jit_type_float64, params, 2, 1);
 	jit_function_t func = jit_function_create(jit_context, signature);
 	jit_value_t val_freq = jit_value_get_param(func, 0),
@@ -129,6 +129,14 @@ jit_function_t parse_function(char **str) {
 	return func;
 }
 
+jit_float64 note_freq(int n) {
+	return 440*pow(2, n/12.0);
+}
+
+jit_nuint note_len(int n) {
+	return RATE/(1 << n);
+}
+
 int main() {
 	char input[1000], *c, *t;
 
@@ -158,21 +166,40 @@ int main() {
 			track.instrument = get_function_by_name(t);
 			LOGF("track.instrument=%p", track.instrument);
 		}
+
+		if (STRNEQ(t, "body", 4))
+			break;
 	}
 	jit_context_build_end(jit_context);
 
-	jit_float64 result;
+	jit_float64 result,
+				freq,
+				cur_note_freq;
 	jit_nuint	sample,
-				freq;
+				cur_note_len;
 	void *args[2] = { &freq, &sample };
 
 	int16_t raw_sample;
 
-	freq = 440;
-	for (sample = 0; sample < RATE; sample++) {
-		jit_function_apply(track.instrument, args, &result);
-		raw_sample = result*32767;
-		write(1, &raw_sample, 2);
+	int set_note_len = 2;
+
+	char ch;
+	while ((ch = fgetc(stdin)) != EOF) {
+		if (ch == '+')
+			cur_note_len--;
+		else if (ch == '-')
+			cur_note_len++;
+		else if (ch >= 'a' && ch <= 'z') {
+			cur_note_len = note_len(set_note_len);
+			freq = note_freq(ch-'a');
+			LOGF("note %f %i", freq, cur_note_len);
+			for (sample = 0; sample < cur_note_len; sample++) {
+				jit_function_apply(track.instrument, args, &result);
+				//LOGF("f(%i, %i) = %f", freq, sample, result);
+				raw_sample = result*32767;
+				write(1, &raw_sample, 2);
+			}
+		}
 	}
 	
 	slist_free(funclist);

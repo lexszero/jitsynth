@@ -1,4 +1,7 @@
-function square F X * RATE % RATE / 0.5 > 2 * -1 +
-function shit F X square F 2 * X square + 0.5 *
+function _square F X * RATE % RATE / 0.5 > 2 * -1 +
+function _sin 2 PI * X RATE / * F * sin
+function _saw F X * RATE % RATE / 2 * -1 +
+function shit 50 X _square F X _square * 25 X _square F 100 + X _square * 12.5 X _square F 200 + X _square * + + 3 /
 track shit
-#instrument shit 50 sample square freq sample square * 25 sample square freq 100 + sample square * + 12.5 sample square freq 200 + sample square * +
+body
+++abedaedcabededcb
