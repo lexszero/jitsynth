@@ -1,11 +1,46 @@
 Usage example:
 	./synth < test.synth | aplay -c1 -r 44100 -f U16
 
-Pre-defined variables:
+
+
+Defining functions
+	function <name> <body>
+
+Body is written as postfix expression with following syntax:
+	<func> ::= <terminal> | <func> <unary> | <func> <func> <binary>
+	<unary> ::= "sin" | <TODO_more_operators>
+	<binary> ::= "+" | "-" | "*" | "/" | "%" | "<" | ">" | FUNCTION
+	<terminal> ::= NUMBER | ARGUMENT | CONSTANT
+	
+Function arguments:
 	F - note frequency
 	X - sample number from the beginning of note
-	LEN - note length in samples
-
+	LEN - total requested duration in samples (actually, not an "argument" in expressions. fucked up, i know.)
 Constants:
 	RATE - sample rate
 	PI - pi constant
+
+FUNCTION calls in expression takes two arguments (F and X), LEN is defined at highest function level.
+	
+
+Commands (NOT YET IMPLEMENTED) (need discussion about this)
+
+Generic
+	v<X> - set track volume to X/100, X ∊ [0, 255] (we can do some overload/distortion :3)
+
+High-level (translates to low-level internally)
+	t<X> - set tempo to X full notes per minute, X ∊ [0, 65535]
+	o<X> - set octave to X, if X≡1 ⇒ note A = 440 Hz (can be negative)
+	d<X> - set note duration to 1/2^X
+	X[,<length_spec>] - play note X, X ∊ [-128,127] (in semitones from A) with duration setted by 'd' command.
+	-[<length_spec>] - pause with duration setted by 'd' command
+
+	<length_spec> - optional parameter
+		. - dotted (1½)
+		3 - triol (⅔)
+		<X> - duration = 1/2^X*full_note_duration
+		<X.Y> - duration = 
+
+Low-level (result of translation of high-level commands, also can be given directly)
+	(<freq>, <duration>) - play sound with given frequency and duration.
+	(0, <duration>) - keep silent some time
