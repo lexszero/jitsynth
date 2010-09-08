@@ -213,7 +213,7 @@ int main() {
 			for (sample = 0; sample < cur_note_len; sample++) {
 				jit_function_apply(track.instrument, args, &result);
 				//LOGF("f(%i, %i) = %f", freq, sample, result);
-				raw_sample = result*65535;
+				raw_sample = result*32767;
 				write(1, &raw_sample, 2);
 			}
 		}

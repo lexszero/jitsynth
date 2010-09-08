@@ -1,5 +1,5 @@
 Usage example:
-	./synth < test.synth | aplay -c1 -r 44100 -f S16
+	./synth < test.synth | aplay -c1 -r 44100 -f U16
 
 Pre-defined variables:
 	F - note frequency
