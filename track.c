@@ -1,10 +1,14 @@
 #include "common.h"
 #include "function.h"
 #include "track.h"
+#include <sys/soundcard.h>
+#include <sys/ioctl.h>
 
 const jit_nuint note_len_infinity = -1;
 track_t *tracks[MAX_TRACK];
 int tracks_count;
+
+static int fd;
 
 jit_float64 track_get_sample(track_t *t) {
 	jit_float64 result;
@@ -46,7 +50,7 @@ void * player(void *args) {
 			sample += track_get_sample(tracks[i]) * tracks[i]->volume;
 		}
 		raw_sample = sample * 65535;
-		write(1, &raw_sample, 2); 
+		write(fd, &raw_sample, 2); 
 	}
 	LOGF("player thread finished");
 	return NULL;
@@ -56,6 +60,20 @@ pthread_t player_thread;
 
 void init_player() {
 	tracks_count = 0;
+    int i;
+    if ((fd = open("/dev/dsp", O_WRONLY)) == -1) {
+        LOGF("/dev/dsp open failed: %i", errno);
+
+		return;
+    }
+
+	i = 1;
+	ioctl(fd, SNDCTL_DSP_CHANNELS, &i);
+	i = AFMT_U16_LE;
+	ioctl(fd, SNDCTL_DSP_SETFMT, &i);
+	i = RATE;
+	ioctl(fd, SNDCTL_DSP_SPEED, &i);
+
 	if (pthread_create(&player_thread, NULL, player, NULL) != 0) {
 		LOGF("player thread creation failed");
 		return;

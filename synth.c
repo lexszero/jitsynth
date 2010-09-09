@@ -57,7 +57,7 @@ int main() {
 		LOGF("ch=%c", ch);
 		track_lock(tracks[0]);
 		LOGF("locked");
-		tracks[0]->i_functional->freq = note_freq(ch-'a');
+		tracks[0]->i_functional->freq = note_freq(ch-'0');
 		tracks[0]->i_functional->len = note_len(4);
 		tracks[0]->sample = 0;
 		track_unlock(tracks[0]);

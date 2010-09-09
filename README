@@ -1,5 +1,5 @@
 Usage example:
-	./synth < test.synth | aplay -c1 -r 44100 -f U16
+	aoss ./synth < test.synth
 
 
 
