@@ -3,6 +3,6 @@ function _square F X _saw 0.5 >
 function _sin 2 PI * X RATE / * F * sin 1 + 2 /
 function _phase X RATE /
 function blip X LEN 2 / < 1 + F * X _square
-track blip
+track 100 function blip
 body
 -b  d  e  d  b  g  e  d  b  d  e  g  i  g  e  d  b  d  e  d  b  g  e  d  a  b  d  e  g  i  e  d
