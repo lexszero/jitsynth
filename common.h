@@ -18,11 +18,12 @@
 
 #define LOGF(fmt, args...) fprintf(stderr, "%s:%i %s(): " fmt "\n", __FILE__, __LINE__, __func__,  ##args)
 #define STRNEQ(a, b, n) (strncmp(a, b, n) == 0)
+#define STREQ(a, b) (strcmp(a, b) == 0)
 
 extern bool running;
 
 extern jit_context_t jit_context;
 
-extern char *token(char **str);
+extern char *token();
 extern jit_float64 note_freq(int n);
 extern jit_nuint note_len(int n);

@@ -21,7 +21,7 @@ jit_float64 track_get_sample(track_t *t) {
 				result = 0;
 				break;
 		case T_FUNCTIONAL: ;;
-				instrument_functional_t *instr = t->i_functional;
+				instrument_functional_t *instr = t->ptr.i_functional;
 				if ((t->sample < instr->len) || (instr->len == note_len_infinity)) {
 					void *args[3] = { &(instr->freq), &(t->sample), &(instr->len)};
 					jit_function_apply(instr->func, args, &result);
@@ -63,7 +63,6 @@ void init_player() {
     int i;
     if ((fd = open("/dev/dsp", O_WRONLY)) == -1) {
         LOGF("/dev/dsp open failed: %i", errno);
-
 		return;
     }
 

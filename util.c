@@ -1,18 +1,23 @@
 #include "common.h"
 
+static char *skip_chars = " \r\n\t";
 /* Ugly tokenizer :3 */
-char *token(char **str) {
-	while (**str && (**str == ' ' || **str == '\n'))
-		(*str)++;
-	if (! **str)
+char *token() {
+	char c;
+	c = getchar();
+	while ((c != EOF) && (strchr(skip_chars, c) != NULL))
+		c = getchar();
+	if (c == EOF)
 		return NULL;
-	char *result = *str;
-	while (**str &&	(**str != ' ' && **str != '\n')) {
-		(*str)++;
+	char buf[256], *cur = buf;
+	while ((c != EOF) && (strchr(skip_chars, c) == NULL)) {
+		*(cur++) = c;
+		c = getchar();
 	}
-	*(*str)++ = 0;
-	LOGF("token=%s", result);
-	return result;
+	*cur = 0;
+	//LOGF("token=%s", buf);
+	// you should care about freeing memory :3
+	return strdup(buf);
 }
 
 jit_float64 note_freq(int n) {

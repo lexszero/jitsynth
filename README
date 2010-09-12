@@ -6,8 +6,8 @@ Usage example:
 Defining functions
 	function <name> <body>
 
-Body is written as postfix expression with following syntax:
-	<func> ::= <terminal> | <func> <unary> | <func> <func> <binary>
+Body is written as prefix expression with following syntax:
+	<func> ::= <func> <unary> | <func> <func> <binary> | <terminal>
 	<unary> ::= "sin" | <TODO_more_operators>
 	<binary> ::= "+" | "-" | "*" | "/" | "%" | "<" | ">" | FUNCTION
 	<terminal> ::= NUMBER | ARGUMENT | CONSTANT

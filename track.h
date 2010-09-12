@@ -25,7 +25,7 @@ typedef struct track_t {
 		void *i_nothing;
 		instrument_functional_t *i_functional;
 		instrument_sampler_t *i_sampler; // TODO :)
-	};
+	} ptr;
 } track_t;
 
 #define MAX_TRACK 100

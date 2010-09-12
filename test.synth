@@ -1,8 +1,54 @@
-function _saw F X * RATE % RATE / 
-function _square F X _saw 0.5 >
-function _sin 2 PI * X RATE / * F * sin 1 + 2 /
-function _phase X RATE /
-function blip X LEN 2 / < 1 + F * X _square
+function _saw
+	/
+		%
+			* F X
+			RATE
+		RATE
+
+function _square
+	>
+		_saw F X
+		0.5
+
+function _triangle
+	+
+		*
+			< _saw F X 0.5
+			_saw * F 2 X
+		*
+			> _saw F X 0.5
+			-
+				1
+				_saw * F 2 X
+
+
+function _sin
+	/
+		+
+			1
+			sin
+				*
+					2
+					*
+						PI
+						*
+							F
+							/ X RATE
+		2
+
+function blip
+	_square
+		*
+			+ < X / LEN 2 1
+			F
+		X
+
+function piu
+	_sin
+		* 
+			/ X LEN
+			F
+		X
+
 track 100 function blip
 body
--b  d  e  d  b  g  e  d  b  d  e  g  i  g  e  d  b  d  e  d  b  g  e  d  a  b  d  e  g  i  e  d

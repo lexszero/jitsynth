@@ -5,6 +5,7 @@
 #define stack_new(name) name##_new();
 #define stack_push(name, data) name##_push(name, data)
 #define stack_pop(name) name##_pop(name)
+#define stack_empty(name) name##_empty(name);
 #define stack_free(name) name##_free(name);
 #endif
 
@@ -42,6 +43,10 @@ static TYPE NAME_pop(NAME_t *t) {
 	free(item);
 	LOGF("pop head=%p", t->head);
 	return data;
+}
+
+static bool stack_empty(NAME_t *t) {
+	return (t->head != NULL);
 }
 
 static void NAME_free(NAME_t *t) {
