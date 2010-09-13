@@ -5,10 +5,17 @@ static char *skip_chars = " \r\n\t";
 char *token() {
 	char c;
 	c = getchar();
-	while ((c != EOF) && (strchr(skip_chars, c) != NULL))
+	while ((c != EOF) && (strchr(skip_chars, c) != NULL)) {
 		c = getchar();
+		if (c == '#') {
+			while ((c != EOF) && (c != '\n'))
+				c = getchar();
+			LOGF("skip comment to EOL");
+		}
+	}
 	if (c == EOF)
 		return NULL;
+
 	char buf[256], *cur = buf;
 	while ((c != EOF) && (strchr(skip_chars, c) == NULL)) {
 		*(cur++) = c;
