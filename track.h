@@ -2,9 +2,18 @@ extern const jit_nuint note_len_infinity;
 
 typedef struct instrument_functional_t {
 	jit_function_t func;
+	jit_function_t attack;
+	jit_function_t release;
 	jit_float64 freq;
 	jit_nuint len,
-			  default_len;
+			  attack_len,
+			  release_len;
+	enum {
+		S_MUTE,
+		S_ATTACK,
+		S_SUSTAIN,
+		S_RELEASE
+	} state;
 } instrument_functional_t;
 
 typedef struct instrument_sampler_t {
@@ -14,7 +23,8 @@ typedef struct instrument_sampler_t {
 
 typedef struct track_t {
 	pthread_mutex_t mutex;
-	jit_nuint sample;
+	jit_nuint sample,
+			  release_sample;
 	jit_float64 volume;
 	enum {
 		T_NULL,

@@ -9,7 +9,6 @@ jit_context_t jit_context;
 
 
 int main() {
-	char *t;
 
 	running = true;
 	init_function();
@@ -17,38 +16,87 @@ int main() {
 
 	jit_context = jit_context_create();
 	jit_context_build_start(jit_context);
-
-	while ((t = token()) != NULL) {
+	
+	/* This parser sucks, but works. */
+	char *t = token();
+	bool parser_ok = false;
+	enum {
+		PC_EXIT,
+		PC_MAIN,
+		PC_TRACK,
+		PC_FUNCTION
+	} parser_context = PC_MAIN;
+	track_t *tmptrack;
+	do {
 		if (t[0] == '#') continue;
+		parser_ok = false;
 
-		if (STRNEQ(t, "function", 8)) {
-			t = token();
-			LOGF("found function %s", t);
-			add_function(strdup(t), parse_function());
+		switch (parser_context) {
+			case PC_MAIN: ;;
+				if (STREQ(t, "function")) {
+					parser_context = PC_FUNCTION;
+					t = token();
+					LOGF("found function %s", t);
+					jit_function_t tmpfunc = parse_function();
+					if (tmpfunc) 
+						add_function(strdup(t), tmpfunc);
+					else
+						LOGF("function '%s' parse failed", t);
+					parser_context = PC_MAIN;
+					parser_ok = true;
+				}
+				else if (STREQ(t, "track")) {
+					parser_context = PC_TRACK;
+					tmptrack = calloc(1, sizeof(track_t));
+					LOGF("adding track, track_count=%i", tracks_count);
+					tracks[tracks_count++] = tmptrack;
+					parser_ok = true;
+				}
+				else if (STREQ(t, "body")) {
+					parser_context = PC_EXIT;
+					parser_ok = false;
+				}
+				break;
+			case PC_TRACK: ;;
+				if (STREQ(t, "volume")) {
+					t = token();
+					tmptrack->volume = atof(t)/100.0;
+					parser_ok = true;
+				}
+				else if (STREQ(t, "function")) {
+					t = token();
+					tmptrack->type = T_FUNCTIONAL;
+					tmptrack->ptr.i_functional = calloc(1, sizeof(instrument_functional_t));
+					tmptrack->ptr.i_functional->func = get_function_by_name(t);
+					parser_ok = true;
+				}
+				else if (STREQ(t, "attack")) {
+					t = token();
+					tmptrack->ptr.i_functional->attack = get_function_by_name(t);
+					t = token();
+					tmptrack->ptr.i_functional->attack_len = atof(t);
+					parser_ok = true;
+				}
+				else if (STREQ(t, "release")) {
+					t = token();
+					tmptrack->ptr.i_functional->release = get_function_by_name(t);
+					t = token();
+					tmptrack->ptr.i_functional->release_len = atof(t);
+					parser_ok = true;
+				}
+				else {
+					parser_ok = false;
+					parser_context = PC_MAIN;
+				}
+				break;
 		}
 
-		if (STRNEQ(t, "track", 5)) {
-			track_t *track = calloc(1, sizeof(track_t));
-			t = token();
-			track->volume = atof(t)/100.0;
-			t = token();
-			if (STRNEQ(t, "function", 8)) {
-				t = token();
-				track->type = T_FUNCTIONAL;
-				instrument_functional_t *fi = calloc(1, sizeof(instrument_functional_t));
-				fi->func = get_function_by_name(t);
-				track->ptr.i_functional = fi;
-				tracks[tracks_count++] = track;
-				LOGF("adding track, track_count=%i", tracks_count);
-			}
-			else 
-				LOGF("track type '%s' not implemented", t);
-		}
-
-		if (STRNEQ(t, "body", 4))
-			break;
 		free(t);
-	}
+		if (parser_context == PC_EXIT)
+			break;
+		if (parser_ok)
+			t = token();
+	} while (parser_ok);
 	jit_context_build_end(jit_context);
 
 	/* HOLY VERBOSE XCB SHIT! */
@@ -83,6 +131,7 @@ int main() {
 					track_lock(tracks[0]);
 					tracks[0]->ptr.i_functional->freq = note_freq(kp->detail-20);
 					tracks[0]->ptr.i_functional->len = note_len_infinity;
+					tracks[0]->ptr.i_functional->state = S_ATTACK;
 					tracks[0]->sample = 0;
 					track_unlock(tracks[0]);
 					
@@ -95,8 +144,8 @@ int main() {
 				if (kr->detail == last_key) {
 					LOGF("Released %i %i", kr->detail, kr->state);
 					track_lock(tracks[0]);
-					tracks[0]->ptr.i_functional->len = 0;
-					tracks[0]->sample = 0;
+					tracks[0]->ptr.i_functional->state = S_RELEASE;
+					tracks[0]->release_sample = 0;
 					track_unlock(tracks[0]);
 					
 					last_key = 0;

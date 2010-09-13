@@ -11,7 +11,7 @@ int tracks_count;
 static int fd;
 
 jit_float64 track_get_sample(track_t *t) {
-	jit_float64 result;
+	jit_float64 result, result1;
 	if (track_busy(t)) {
 		LOGF("track %p busy", t);
 		return 0;
@@ -22,13 +22,30 @@ jit_float64 track_get_sample(track_t *t) {
 				break;
 		case T_FUNCTIONAL: ;;
 				instrument_functional_t *instr = t->ptr.i_functional;
-				if ((t->sample < instr->len) || (instr->len == note_len_infinity)) {
-					void *args[3] = { &(instr->freq), &(t->sample), &(instr->len)};
-					jit_function_apply(instr->func, args, &result);
+				void *args[3] = { &(instr->freq), &(t->sample), &(instr->len)};
+				switch (instr->state) {
+					case S_MUTE: ;;
+						result = 0;
+						break;
+					case S_ATTACK: ;;
+						args[2] = &(instr->attack_len);
+						jit_function_apply(instr->attack, args, &result1);
+						result = result1;
+						if (t->sample > instr->attack_len)
+							instr->state = S_SUSTAIN;
+					case S_RELEASE: ;;
+						args[2] = &(instr->release_len);
+						jit_function_apply(instr->release, args, &result1);
+						result = result1;
+						t->release_sample++;
+						if (t->release_sample > instr->release_len)
+							instr->state = S_MUTE;
+					default: ;;
+						args[2] = &(instr->len);
+						jit_function_apply(instr->func, args, &result1);
+						result *= result1;
+						break;
 				}
-				else 
-					result = 0;
-				break;
 		case T_SAMPLER: ;;
 				// TODO :)
 				result = 0;

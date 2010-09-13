@@ -71,5 +71,5 @@ function shit
 		_triangle F X
 		_square - F 2 X
 
-track 100 function shit
+track volume 100 function shit
 body
