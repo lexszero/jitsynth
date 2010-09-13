@@ -1,5 +1,5 @@
 CFLAGS += -ggdb -O0 -Wall #-std=c99
-LDFLAGS += -lm -ljit -lcurses
+LDFLAGS += -lm -ljit -lxcb
 
 all: synth
 

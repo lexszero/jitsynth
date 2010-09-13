@@ -50,5 +50,18 @@ function piu
 			F
 		X
 
-track 100 function blip
+function ring
+	*
+		_saw
+			5
+			X
+		*
+			_triangle
+				30
+				X
+			_square
+				F
+				X
+
+track 100 function ring
 body
