@@ -73,32 +73,34 @@ int main() {
 	xcb_flush(xcb_conn);
 
 	xcb_generic_event_t *ev;
+	xcb_keycode_t last_key;
 	while ((ev = xcb_wait_for_event(xcb_conn)) != NULL) {
 		switch (ev->response_type & ~0x80) {
 			case XCB_KEY_PRESS: ;;
 				xcb_key_press_event_t *kp = (xcb_key_press_event_t *)ev;
-				LOGF("Pressed %i", kp->detail);
-	
-				track_lock(tracks[0]);
-				LOGF("locked");
-				tracks[0]->ptr.i_functional->freq = note_freq(kp->detail-10);
-				tracks[0]->ptr.i_functional->len = note_len_infinity;
-				tracks[0]->sample = 0;
-				track_unlock(tracks[0]);
-				LOGF("unlocked");
+				if (kp->detail != last_key) {
+					LOGF("Pressed %i %i", kp->detail, kp->state);	
+					track_lock(tracks[0]);
+					tracks[0]->ptr.i_functional->freq = note_freq(kp->detail-20);
+					tracks[0]->ptr.i_functional->len = note_len_infinity;
+					tracks[0]->sample = 0;
+					track_unlock(tracks[0]);
+					
+					last_key = kp->detail;
+				}
 
 				break;
 			case XCB_KEY_RELEASE: ;;
 				xcb_key_release_event_t *kr = (xcb_key_release_event_t *)ev;
-				LOGF("Released %i", kr->detail);
-	
-				track_lock(tracks[0]);
-				LOGF("locked");
-				tracks[0]->ptr.i_functional->len = 0;
-				tracks[0]->sample = 0;
-				track_unlock(tracks[0]);
-				LOGF("unlocked");
-
+				if (kr->detail == last_key) {
+					LOGF("Released %i %i", kr->detail, kr->state);
+					track_lock(tracks[0]);
+					tracks[0]->ptr.i_functional->len = 0;
+					tracks[0]->sample = 0;
+					track_unlock(tracks[0]);
+					
+					last_key = 0;
+				}
 				break;
 
 		}

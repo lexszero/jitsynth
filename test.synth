@@ -43,6 +43,9 @@ function blip
 			F
 		X
 
+############################
+# some kawaii effects next #
+############################
 function piu
 	_sin
 		* 
@@ -53,7 +56,7 @@ function piu
 function ring
 	*
 		_saw
-			5
+			23
 			X
 		*
 			_triangle
@@ -63,5 +66,10 @@ function ring
 				F
 				X
 
-track 100 function ring
+function shit
+	*
+		_triangle F X
+		_square - F 2 X
+
+track 100 function shit
 body
