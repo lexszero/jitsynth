@@ -40,17 +40,20 @@ jit_float64 track_get_sample(track_t *t) {
 }
 
 void * player(void *args) {
-	uint16_t raw_sample;
+	const size_t buf_size = 256;
+	uint16_t buf[buf_size];
 	jit_float64 sample;
-	int i;
+	int i, j;
 	LOGF("player thread started");
 	while (running) {
-		sample = 0;
-		for (i = 0; i < tracks_count; i++) {
-			sample += track_get_sample(tracks[i]) * tracks[i]->volume;
+		for (j = 0; j < buf_size; j++) {
+			sample = 0;
+			for (i = 0; i < tracks_count; i++) {
+				sample += track_get_sample(tracks[i]) * tracks[i]->volume;
+			}
+			buf[j] = sample * 65535;
 		}
-		raw_sample = sample * 65535;
-		write(fd, &raw_sample, 2); 
+		write(fd, &buf, sizeof(uint16_t)*buf_size); 
 	}
 	LOGF("player thread finished");
 	return NULL;
