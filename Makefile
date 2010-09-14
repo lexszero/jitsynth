@@ -5,7 +5,7 @@ all: synth
 
 synth: synth.o function.o track.o util.o
 
-synth.o: synth.c common.h
+synth.o: synth.c common.h track.h function.h
 
 util.o: util.c common.h
 

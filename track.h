@@ -4,10 +4,12 @@ typedef struct instrument_functional_t {
 	jit_function_t func;
 	jit_function_t attack;
 	jit_function_t release;
-	jit_float64 freq;
+	jit_float64 freq,
+				vol;
 	jit_nuint len,
 			  attack_len,
-			  release_len;
+			  release_len,
+			  release_start;
 	enum {
 		S_MUTE,
 		S_ATTACK,
@@ -23,8 +25,7 @@ typedef struct instrument_sampler_t {
 
 typedef struct track_t {
 	pthread_mutex_t mutex;
-	jit_nuint sample,
-			  release_sample;
+	jit_nuint sample;
 	jit_float64 volume;
 	enum {
 		T_NULL,

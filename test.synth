@@ -71,5 +71,16 @@ function shit
 		_triangle F X
 		_square - F 2 X
 
-track volume 100 function shit
+function envelope_up
+	/ X LEN
+
+function envelope_down
+	-
+		1
+		/
+			X
+			LEN
+
+
+track volume 100 function shit attack envelope_up 0.2 release envelope_down 0.02
 body

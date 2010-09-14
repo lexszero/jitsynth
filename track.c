@@ -11,7 +11,7 @@ int tracks_count;
 static int fd;
 
 jit_float64 track_get_sample(track_t *t) {
-	jit_float64 result, result1;
+	jit_float64 result;
 	if (track_busy(t)) {
 		LOGF("track %p busy", t);
 		return 0;
@@ -23,33 +23,54 @@ jit_float64 track_get_sample(track_t *t) {
 		case T_FUNCTIONAL: ;;
 				instrument_functional_t *instr = t->ptr.i_functional;
 				void *args[3] = { &(instr->freq), &(t->sample), &(instr->len)};
-				switch (instr->state) {
-					case S_MUTE: ;;
-						result = 0;
-						break;
-					case S_ATTACK: ;;
+				if (instr->state == S_ATTACK) {
+					if (instr->attack) {
+						args[1] = &(t->sample);
 						args[2] = &(instr->attack_len);
-						jit_function_apply(instr->attack, args, &result1);
-						result = result1;
-						if (t->sample > instr->attack_len)
+						jit_function_apply(instr->attack, args, &(instr->vol));
+						if (t->sample >= instr->attack_len) {
+							LOGF("sustain vol = %f", instr->vol);
 							instr->state = S_SUSTAIN;
-					case S_RELEASE: ;;
-						args[2] = &(instr->release_len);
-						jit_function_apply(instr->release, args, &result1);
-						result = result1;
-						t->release_sample++;
-						if (t->release_sample > instr->release_len)
-							instr->state = S_MUTE;
-					default: ;;
-						args[2] = &(instr->len);
-						jit_function_apply(instr->func, args, &result1);
-						result *= result1;
-						break;
+						}
+					}
+					else
+						instr->state = S_SUSTAIN;
 				}
+
+				if (instr->state == S_RELEASE) {
+					if (instr->release) {
+						jit_nuint release_sample = t->sample - instr->release_start;
+						args[1] = &(release_sample);
+						args[2] = &(instr->release_len);
+						jit_function_apply(instr->release, args, &(instr->vol));
+						if (release_sample >= instr->release_len) {
+							LOGF("mute1");
+							instr->state = S_MUTE;
+						}
+					}
+					else {
+						LOGF("mute2");
+						instr->state = S_MUTE;
+					}
+				}
+
+				if (instr->state != S_MUTE) {
+					args[1] = &(t->sample);
+					args[2] = &(instr->len);
+					jit_function_apply(instr->func, args, &result);
+					result *= instr->vol;
+				}
+				else
+					result = 0;
+
+				break;
+
 		case T_SAMPLER: ;;
 				// TODO :)
 				result = 0;
 				break;
+		
+		default: ;;
 	}
 	t->sample++;
 	track_unlock(t);

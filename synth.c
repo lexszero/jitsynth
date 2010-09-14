@@ -74,14 +74,14 @@ int main() {
 					t = token();
 					tmptrack->ptr.i_functional->attack = get_function_by_name(t);
 					t = token();
-					tmptrack->ptr.i_functional->attack_len = atof(t);
+					tmptrack->ptr.i_functional->attack_len = atof(t)*RATE;
 					parser_ok = true;
 				}
 				else if (STREQ(t, "release")) {
 					t = token();
 					tmptrack->ptr.i_functional->release = get_function_by_name(t);
 					t = token();
-					tmptrack->ptr.i_functional->release_len = atof(t);
+					tmptrack->ptr.i_functional->release_len = atof(t)*RATE;
 					parser_ok = true;
 				}
 				else {
@@ -145,7 +145,7 @@ int main() {
 					LOGF("Released %i %i", kr->detail, kr->state);
 					track_lock(tracks[0]);
 					tracks[0]->ptr.i_functional->state = S_RELEASE;
-					tracks[0]->release_sample = 0;
+					tracks[0]->ptr.i_functional->release_start = tracks[0]->sample;
 					track_unlock(tracks[0]);
 					
 					last_key = 0;
