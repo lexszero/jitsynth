@@ -30,6 +30,7 @@ jit_float64 track_get_sample(track_t *t) {
 						jit_function_apply(instr->attack, args, &(instr->vol));
 						if (t->sample >= instr->attack_len) {
 							LOGF("sustain vol = %f", instr->vol);
+							instr->sustain_vol = instr->vol;
 							instr->state = S_SUSTAIN;
 						}
 					}
@@ -42,7 +43,8 @@ jit_float64 track_get_sample(track_t *t) {
 						jit_nuint release_sample = t->sample - instr->release_start;
 						args[1] = &(release_sample);
 						args[2] = &(instr->release_len);
-						jit_function_apply(instr->release, args, &(instr->vol));
+						jit_function_apply(instr->release, args, &(result));
+						instr->vol = instr->sustain_vol*result;
 						if (release_sample >= instr->release_len) {
 							LOGF("mute1");
 							instr->state = S_MUTE;
@@ -94,25 +96,35 @@ void * player(void *args) {
 		write(fd, &buf, sizeof(uint16_t)*buf_size); 
 	}
 	LOGF("player thread finished");
+	close(fd);
 	return NULL;
 }
 
 pthread_t player_thread;
 
-void init_player() {
+void init_player(char *dsp) {
 	tracks_count = 0;
     int i;
-    if ((fd = open("/dev/dsp", O_WRONLY)) == -1) {
-        LOGF("/dev/dsp open failed: %i", errno);
-		return;
-    }
+	if (dsp && STREQ(dsp, "-")) {
+		LOGF("output to stdout");
+		fd = 1;
+	}
+	else {
+		if (dsp == NULL)
+			dsp = strdup("/dev/dsp");
+		LOGF("dsp %s", dsp);
+		if ((fd = open(dsp, O_WRONLY)) == -1) {
+    	    LOGF("%s open failed: %i", dsp, errno);
+			return;
+		}
 
-	i = 1;
-	ioctl(fd, SNDCTL_DSP_CHANNELS, &i);
-	i = AFMT_U16_LE;
-	ioctl(fd, SNDCTL_DSP_SETFMT, &i);
-	i = RATE;
-	ioctl(fd, SNDCTL_DSP_SPEED, &i);
+		i = 1;
+		ioctl(fd, SNDCTL_DSP_CHANNELS, &i);
+		i = AFMT_U16_LE;
+		ioctl(fd, SNDCTL_DSP_SETFMT, &i);
+		i = RATE;
+		ioctl(fd, SNDCTL_DSP_SPEED, &i);
+	}
 
 	if (pthread_create(&player_thread, NULL, player, NULL) != 0) {
 		LOGF("player thread creation failed");

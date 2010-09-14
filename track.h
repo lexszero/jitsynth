@@ -5,7 +5,8 @@ typedef struct instrument_functional_t {
 	jit_function_t attack;
 	jit_function_t release;
 	jit_float64 freq,
-				vol;
+				vol,
+				sustain_vol;
 	jit_nuint len,
 			  attack_len,
 			  release_len,
@@ -49,4 +50,4 @@ extern int tracks_count;
 extern jit_float64 track_get_sample(track_t *t);
 
 extern pthread_t player_thread;
-extern void init_player();
+extern void init_player(char *dsp);

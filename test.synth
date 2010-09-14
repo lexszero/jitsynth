@@ -11,16 +11,12 @@ function _square
 		0.5
 
 function _triangle
-	+
-		*
-			< _saw F X 0.5
+	if
+		< _saw F X 0.5
+		_saw * F 2 X
+		-
+			1
 			_saw * F 2 X
-		*
-			> _saw F X 0.5
-			-
-				1
-				_saw * F 2 X
-
 
 function _sin
 	/

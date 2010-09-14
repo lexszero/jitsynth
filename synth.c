@@ -8,11 +8,14 @@ bool running;
 jit_context_t jit_context;
 
 
-int main() {
+int main(int argc, char **argv) {
 
 	running = true;
 	init_function();
-	init_player();
+	if (argc > 1)
+		init_player(strdup(argv[1]));
+	else
+		init_player(NULL);
 
 	jit_context = jit_context_create();
 	jit_context_build_start(jit_context);
