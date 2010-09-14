@@ -60,28 +60,36 @@ int main() {
 			case PC_TRACK: ;;
 				if (STREQ(t, "volume")) {
 					t = token();
+					track_lock(tmptrack);
 					tmptrack->volume = atof(t)/100.0;
+					track_unlock(tmptrack);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "function")) {
 					t = token();
+					track_lock(tmptrack);
 					tmptrack->type = T_FUNCTIONAL;
 					tmptrack->ptr.i_functional = calloc(1, sizeof(instrument_functional_t));
 					tmptrack->ptr.i_functional->func = get_function_by_name(t);
+					track_unlock(tmptrack);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "attack")) {
 					t = token();
+					track_lock(tmptrack);
 					tmptrack->ptr.i_functional->attack = get_function_by_name(t);
 					t = token();
 					tmptrack->ptr.i_functional->attack_len = atof(t)*RATE;
+					track_unlock(tmptrack);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "release")) {
 					t = token();
+					track_lock(tmptrack);
 					tmptrack->ptr.i_functional->release = get_function_by_name(t);
 					t = token();
 					tmptrack->ptr.i_functional->release_len = atof(t)*RATE;
+					track_unlock(tmptrack);
 					parser_ok = true;
 				}
 				else {
