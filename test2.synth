@@ -1,0 +1,57 @@
+function _saw
+	/
+		%
+			* F X
+			RATE
+		RATE
+
+function _square
+	>
+		_saw F X
+		0.5
+
+function _triangle
+	if 
+		< _saw F X 0.5
+		_saw * F 2 X
+		-
+			1
+			_saw * F 2 X
+
+function _sin
+	/
+		+
+			1
+			sin
+				*
+					2
+					*
+						PI
+						*
+							F
+							/ X RATE
+		2
+
+function organ
+	/
+		+
+			_sin F X
+			+
+				_sin * F 3 X
+				_sin * F 5 X
+		3
+
+function envelope_down
+	-
+		1
+		/
+			X
+			LEN
+
+function envelope_updown.1
+	_triangle 15 X
+
+track volume 100 function organ attack envelope_updown.1 0.05 release envelope_down 1
+body
+
+
