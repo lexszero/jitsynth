@@ -16,5 +16,9 @@ track.o: track.c track.h common.h function.h
 funclist.h: generic_slist.h
 	sed "s/NAME/funclist/g; s/TYPE/function_t */g" generic_slist.h > funclist.h	
 
+function_test: function_test.c function.o util.o
+
+.PHONY: clean
+
 clean:
 	rm *.o synth funclist.h
