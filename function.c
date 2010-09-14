@@ -91,12 +91,24 @@ static jit_value_t parse_recursive(jit_function_t func) {
 	else if (STREQ(t, ">")) {
 		arg1 = parse_recursive(func);
 		arg2 = parse_recursive(func);
-		result = jit_insn_gt(func, arg2, arg1);
+		result = jit_insn_gt(func, arg1, arg2);
 	}
 	else if (STREQ(t, "<")) {
 		arg1 = parse_recursive(func);
 		arg2 = parse_recursive(func);
-		result = jit_insn_lt(func, arg2, arg1);
+		result = jit_insn_lt(func, arg1, arg2);
+	}
+	else if (STREQ(t, "if")) {
+		jit_value_t tmpval = jit_value_create(func, jit_type_float64);
+		jit_label_t lb_false = jit_label_undefined,
+					lb_end = jit_label_undefined;
+		jit_insn_branch_if_not(func, jit_insn_to_bool(func, parse_recursive(func)), &lb_false);
+		jit_insn_store(func, tmpval, parse_recursive(func));
+		jit_insn_branch(func, &lb_end);
+		jit_insn_label(func, &lb_false);
+		jit_insn_store(func, tmpval, parse_recursive(func));
+		jit_insn_label(func, &lb_end);
+		result = jit_insn_load(func, tmpval);
 	}
 	else if (STREQ(t, "sin"))
 		result = jit_insn_sin(func, parse_recursive(func));

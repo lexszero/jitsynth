@@ -7,9 +7,10 @@ Defining functions
 	function <name> <body>
 
 Body is written as prefix expression with following syntax:
-	<func> ::= <func> <unary> | <func> <func> <binary> | <terminal>
+	<func> ::= <unary> <func> | <binary> <func> <func> | <ternary> <func> <func> <func> | <terminal>
 	<unary> ::= "sin" | <TODO_more_operators>
 	<binary> ::= "+" | "-" | "*" | "/" | "%" | "<" | ">" | FUNCTION
+	<ternary> ::= "if"
 	<terminal> ::= NUMBER | ARGUMENT | CONSTANT
 	
 Function arguments:
