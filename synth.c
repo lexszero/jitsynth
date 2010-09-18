@@ -2,14 +2,26 @@
 #include "function.h"
 #include "track.h"
 
-#include <xcb/xcb.h>
 #include <string.h>
+
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+#include <X11/Xlib-xcb.h>
+#include <xcb/xcb.h>
 
 bool running;
 jit_context_t jit_context;
 
-static xcb_connection_t *xcb_start() {
-	xcb_connection_t *xcb_conn = xcb_connect(NULL, NULL);
+static void kill_autorepeat(Display *dis) {
+	Bool sup = False;
+	Bool ret = XkbSetDetectableAutoRepeat(dis, True, &sup);
+	assert(sup == True && ret == True);
+	XFlush(dis);
+}
+
+static Display *xcb_start() {
+	Display *dis = XOpenDisplay(NULL);
+	xcb_connection_t *xcb_conn = XGetXCBConnection(dis);
 	const xcb_setup_t *xcb_setup = xcb_get_setup(xcb_conn);
 	xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_setup);
 	xcb_screen_t *xcb_screen = screen_iter.data;
@@ -28,7 +40,8 @@ static xcb_connection_t *xcb_start() {
 						XCB_CW_EVENT_MASK, xcb_values);
 	xcb_map_window(xcb_conn, window);
 	xcb_flush(xcb_conn);
-	return xcb_conn;
+	kill_autorepeat(dis);
+	return dis;
 }
 
 int main(int argc, char **argv) {
@@ -134,7 +147,7 @@ int main(int argc, char **argv) {
 	jit_context_build_end(jit_context);
 
 	/* HOLY VERBOSE XCB SHIT! */
-	xcb_connection_t *xcb_conn = xcb_start();
+	xcb_connection_t *xcb_conn = XGetXCBConnection(xcb_start());
 	xcb_generic_event_t *ev;
 	xcb_keycode_t last_key;
 	while ((ev = xcb_wait_for_event(xcb_conn)) != NULL) {

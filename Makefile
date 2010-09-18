@@ -1,5 +1,5 @@
 CFLAGS += -ggdb -O0 -Wall -Wextra -std=c99
-LDFLAGS += -lm -ljit -lxcb
+LDFLAGS += -lm -ljit -lxcb -lX11 -lX11-xcb
 
 all: synth
 
