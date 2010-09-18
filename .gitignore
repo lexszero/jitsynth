@@ -1,0 +1,4 @@
+*.o
+*.swp
+funclist.h
+synth
