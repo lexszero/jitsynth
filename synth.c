@@ -3,10 +3,33 @@
 #include "track.h"
 
 #include <xcb/xcb.h>
+#include <string.h>
 
 bool running;
 jit_context_t jit_context;
 
+static xcb_connection_t *xcb_start() {
+	xcb_connection_t *xcb_conn = xcb_connect(NULL, NULL);
+	const xcb_setup_t *xcb_setup = xcb_get_setup(xcb_conn);
+	xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_setup);
+	xcb_screen_t *xcb_screen = screen_iter.data;
+	xcb_window_t window = xcb_generate_id(xcb_conn);
+	static const uint32_t xcb_values[] = { XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE };  
+
+	xcb_create_window(	xcb_conn,
+						XCB_COPY_FROM_PARENT,
+						window,
+						xcb_screen->root,
+						0, 0,
+						150, 150,
+						1,
+						XCB_WINDOW_CLASS_INPUT_OUTPUT,
+						xcb_screen->root_visual,
+						XCB_CW_EVENT_MASK, xcb_values);
+	xcb_map_window(xcb_conn, window);
+	xcb_flush(xcb_conn);
+	return xcb_conn;
+}
 
 int main(int argc, char **argv) {
 
@@ -111,26 +134,7 @@ int main(int argc, char **argv) {
 	jit_context_build_end(jit_context);
 
 	/* HOLY VERBOSE XCB SHIT! */
-	xcb_connection_t *xcb_conn = xcb_connect(NULL, NULL);
-	const xcb_setup_t *xcb_setup = xcb_get_setup(xcb_conn);
-	xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_setup);
-	xcb_screen_t *xcb_screen = screen_iter.data;
-	xcb_window_t window = xcb_generate_id(xcb_conn);
-	const static uint32_t xcb_values[] = { XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE };  
-
-	xcb_create_window(	xcb_conn,
-						XCB_COPY_FROM_PARENT,
-						window,
-						xcb_screen->root,
-						0, 0,
-						150, 150,
-						1,
-						XCB_WINDOW_CLASS_INPUT_OUTPUT,
-						xcb_screen->root_visual,
-						XCB_CW_EVENT_MASK, xcb_values);
-	xcb_map_window(xcb_conn, window);
-	xcb_flush(xcb_conn);
-
+	xcb_connection_t *xcb_conn = xcb_start();
 	xcb_generic_event_t *ev;
 	xcb_keycode_t last_key;
 	while ((ev = xcb_wait_for_event(xcb_conn)) != NULL) {

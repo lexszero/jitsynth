@@ -6,7 +6,7 @@
 
 const jit_nuint note_len_infinity = -1;
 track_t *tracks[MAX_TRACK];
-int tracks_count;
+unsigned tracks_count;
 
 static int fd;
 
@@ -83,7 +83,7 @@ void * player(void *args) {
 	const size_t buf_size = 256;
 	uint16_t buf[buf_size];
 	jit_float64 sample;
-	int i, j;
+	unsigned i, j;
 	LOGF("player thread started");
 	while (running) {
 		for (j = 0; j < buf_size; j++) {
