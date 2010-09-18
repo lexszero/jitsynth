@@ -169,15 +169,13 @@ int main(int argc, char **argv) {
 				break;
 			case XCB_KEY_RELEASE: ;;
 				xcb_key_release_event_t *kr = (xcb_key_release_event_t *)ev;
-				if (kr->detail == last_key) {
-					LOGF("Released %i %i", kr->detail, kr->state);
-					track_lock(tracks[0]);
-					tracks[0]->ptr.i_functional->state = S_RELEASE;
-					tracks[0]->ptr.i_functional->release_start = tracks[0]->sample;
-					track_unlock(tracks[0]);
-					
-					last_key = 0;
-				}
+				LOGF("Released %i %i", kr->detail, kr->state);
+				track_lock(tracks[0]);
+				tracks[0]->ptr.i_functional->state = S_RELEASE;
+				tracks[0]->ptr.i_functional->release_start = tracks[0]->sample;
+				track_unlock(tracks[0]);
+				
+				last_key = 0;
 				break;
 
 		}
