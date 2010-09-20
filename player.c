@@ -79,20 +79,20 @@ void * player(void *args) {
 	jit_float64 sample;
 	unsigned j;
 	LOGF("player thread started");
+	tracklistitem_t *ti;
+	plistitem_t *pi, *pni;
 	while (running) {
 		for (j = 0; j < buf_size; j++) {
 			sample = 0;
-			tracklistitem_t *ti;
-			plistitem_t *pi;
 			list_foreach(tracklist, ti) {
 				if (mutex_busy(ti->data)) {
 					LOGF("track %p busy", ti);
 					continue;
 				}
 				else {
-					list_foreach(ti->data.plist, pi) {
+					list_foreach_safe(ti->data.plist, pi, pni, {
 						sample += get_sample(pi) * ti->data.volume;
-					}
+					});
 					mutex_unlock(ti->data);
 				}
 			}
