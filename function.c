@@ -9,8 +9,8 @@ jit_function_t get_function_by_name(char *name) {
 	funclistitem_t *cur;
 	LOGF("Looking for %s", name);
 	for (cur = funclist->head; cur; cur = cur->next)
-		if (strcmp(cur->data->name, name) == 0)
-			return cur->data->func;
+		if (STREQ(cur->data.name, name))
+			return cur->data.func;
 	LOGF("Not found");
 	return NULL;
 }
@@ -153,9 +153,10 @@ jit_function_t parse_function() {
 }
 
 void add_function(char *name, jit_function_t func) {
-	function_t *t = calloc(1, sizeof(function_t));
-	t->name = name;
-	t->func = func;
+	function_t t;
+	memset(&t, 0, sizeof(function_t));
+	t.name = name;
+	t.func = func;
 	list_add_tail(funclist, funclist, t);
 }
 

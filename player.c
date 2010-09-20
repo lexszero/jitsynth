@@ -10,8 +10,8 @@ static int fd;
 
 jit_float64 get_sample(plistitem_t *pt) {
 	jit_float64 result;
-	playing_t *t = pt->data;
-	if (mutex_busy(t)) {
+	playing_t *t = &(pt->data);
+	if (mutex_busy(*t)) {
 		LOGF("playing %p busy", t);
 		return 0;
 	}
@@ -69,15 +69,15 @@ jit_float64 get_sample(plistitem_t *pt) {
 		
 		default: ;;
 	}
-	mutex_unlock(t);
+	mutex_unlock(*t);
 	return result;
 }
 
 void * player(void *args) {
-	const size_t buf_size = 256;
+	const size_t buf_size = 512;
 	uint16_t buf[buf_size];
 	jit_float64 sample;
-	unsigned i, j;
+	unsigned j;
 	LOGF("player thread started");
 	while (running) {
 		for (j = 0; j < buf_size; j++) {
@@ -86,12 +86,12 @@ void * player(void *args) {
 			plistitem_t *pi;
 			list_foreach(tracklist, ti) {
 				if (mutex_busy(ti->data)) {
-					LOGF("track %p busy", ti->data);
+					LOGF("track %p busy", ti);
 					continue;
 				}
 				else {
-					list_foreach(ti->data->plist, pi) {
-						sample += get_sample(pi) * ti->data->volume;
+					list_foreach(ti->data.plist, pi) {
+						sample += get_sample(pi) * ti->data.volume;
 					}
 					mutex_unlock(ti->data);
 				}

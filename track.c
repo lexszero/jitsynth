@@ -13,24 +13,24 @@ void tracker_destroy() {
 }
 
 track_t *track_new(track_type type) {
-	track_t *t = calloc(1, sizeof(track_t));
-	t->type = type;
-	t->plist = list_new(plist);
-	list_add_tail(tracklist, tracklist, t);
-	return t;
+	track_t t;
+	memset(&t, 0, sizeof(track_t));
+	t.type = type;
+	t.plist = list_new(plist);
+	return &(list_add_tail(tracklist, tracklist, t)->data);
 }
 
 /* this two mutator functions should be codogenerated, thou. ROBOWORKZ */
 void track_set_source(track_t *t, track_source s) {
-	mutex_lock(t);
+	mutex_lock(*t);
 	t->source = s;
-	mutex_unlock(t);
+	mutex_unlock(*t);
 }
 
 void track_set_volume(track_t *t, jit_float64 x) {
-	mutex_lock(t);
+	mutex_lock(*t);
 	t->volume = x;
-	mutex_unlock(t);
+	mutex_unlock(*t);
 }
 
 void track_set_function(track_t *t, jit_function_t func) {
@@ -38,9 +38,9 @@ void track_set_function(track_t *t, jit_function_t func) {
 		LOGF("wrong track type");
 		return;
 	}
-	mutex_lock(t);
+	mutex_lock(*t);
 	t->param.p_functional.func = func;
-	mutex_unlock(t);
+	mutex_unlock(*t);
 }
 
 void track_set_attack(track_t *t, jit_function_t func, jit_nuint len) {
@@ -48,10 +48,10 @@ void track_set_attack(track_t *t, jit_function_t func, jit_nuint len) {
 		LOGF("wrong track type");
 		return;
 	}
-	mutex_lock(t);
+	mutex_lock(*t);
 	t->param.p_functional.attack = func;
 	t->param.p_functional.attack_len = len;
-	mutex_unlock(t);
+	mutex_unlock(*t);
 }
 
 void track_set_release(track_t *t, jit_function_t func, jit_nuint len) {
@@ -59,10 +59,10 @@ void track_set_release(track_t *t, jit_function_t func, jit_nuint len) {
 		LOGF("wrong track type");
 		return;
 	}
-	mutex_lock(t);
+	mutex_lock(*t);
 	t->param.p_functional.release = func;
 	t->param.p_functional.release_len = len;
-	mutex_unlock(t);
+	mutex_unlock(*t);
 }
 /* end of ROBOWORKZ */
 
@@ -71,14 +71,17 @@ playing_t *track_play_functional(track_t *t, jit_float64 freq, jit_nuint len) {
 		LOGF("Trying to play functional in incomplatible track");
 		return NULL;
 	}
-	playing_t *p = calloc(1, sizeof(playing_t));
-	p->track = t;
-	p->state.functional.state = S_ATTACK;
-	p->state.functional.sample = 0;
-	p->state.functional.freq = freq;
-	p->state.functional.len = len;
-	list_add_tail(plist, t->plist, p);
-	return p;
+	mutex_lock(*t);
+	playing_t p, *pp;
+	memset(&p, 0, sizeof(playing_t));
+	p.track = t;
+	p.state.functional.state = S_ATTACK;
+	p.state.functional.sample = 0;
+	p.state.functional.freq = freq;
+	p.state.functional.len = len;
+	pp = &(list_add_tail(plist, t->plist, p)->data);
+	mutex_unlock(*t);
+	return pp;
 }
 
 playing_t *track_play_sampler(track_t *t, unsigned id, unsigned loop) {
@@ -86,12 +89,15 @@ playing_t *track_play_sampler(track_t *t, unsigned id, unsigned loop) {
 		LOGF("Trying to play sampler in incomplatible track");
 		return NULL;
 	}
-	playing_t *p = calloc(1, sizeof(playing_t));
-	p->track = t;
-	p->state.sampler.id = id;
-	p->state.sampler.loop = loop;
-	list_add_tail(plist, t->plist, p);
-	return p;
+	mutex_lock(*t);
+	playing_t p, *pp;
+	memset(&p, 0, sizeof(playing_t));
+	p.track = t;
+	p.state.sampler.id = id;
+	p.state.sampler.loop = loop;
+	pp = &(list_add_tail(plist, t->plist, p)->data);
+	mutex_unlock(*t);
+	return pp;
 }
 
 void track_playing_release_all(track_t *t) {
@@ -99,11 +105,15 @@ void track_playing_release_all(track_t *t) {
 		LOGF("releasing not implemented");
 		return;
 	}
+	mutex_lock(*t);
 	plistitem_t *cur;
 	list_foreach(t->plist, cur) {
-		cur->data->state.functional.state = S_RELEASE;
-		cur->data->state.functional.release_start = cur->data->state.functional.sample;
+		if (cur->data.state.functional.state != S_RELEASE) {
+			cur->data.state.functional.state = S_RELEASE;
+			cur->data.state.functional.release_start = cur->data.state.functional.sample;
+		}
 	}
+	mutex_unlock(*t);
 }
 
 void track_playing_delete_all(track_t *t) {

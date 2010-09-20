@@ -1,4 +1,4 @@
-CFLAGS += -ggdb -O0 -Wall -Wextra -std=c99
+CFLAGS += -O3 -Wall -Wextra -std=c99
 LDFLAGS += -lm -ljit -lxcb -lX11 -lX11-xcb
 
 all: synth
@@ -18,13 +18,13 @@ track.o: track.c track.h player.h common.h tracklist.h plist.h
 player.h: tracklist.h plist.h
 
 funclist.h: generic_list.h
-	sed "s/NAME/funclist/g; s/TYPE/function_t */g" generic_list.h > funclist.h	
+	sed "s/NAME/funclist/g; s/TYPE/function_t/g" generic_list.h > funclist.h	
 
 tracklist.h: generic_list.h
-	sed "s/NAME/tracklist/g; s/TYPE/track_t */g" generic_list.h > tracklist.h	
+	sed "s/NAME/tracklist/g; s/TYPE/track_t/g" generic_list.h > tracklist.h	
 
 plist.h: generic_list.h
-	sed "s/NAME/plist/g; s/TYPE/playing_t */g" generic_list.h > plist.h
+	sed "s/NAME/plist/g; s/TYPE/playing_t/g" generic_list.h > plist.h
 
 function_test: function_test.c function.o util.o
 

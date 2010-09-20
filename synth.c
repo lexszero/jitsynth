@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
 				xcb_key_press_event_t *kp = (xcb_key_press_event_t *)ev;
 				if (kp->detail != last_key) {
 					LOGF("Pressed %i %i", kp->detail, kp->state);	
-					track_play_functional(tracklist->head->data, note_freq(kp->detail-20), note_len_infinity);
+					track_play_functional(&(tracklist->head->data), note_freq(kp->detail-20), note_len_infinity);
 					last_key = kp->detail;
 				}
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 				xcb_key_release_event_t *kr = (xcb_key_release_event_t *)ev;
 				LOGF("Released %i %i", kr->detail, kr->state);
 				
-				track_playing_release_all(tracklist->head->data);
+				track_playing_release_all(&(tracklist->head->data));
 
 				last_key = 0;
 				break;

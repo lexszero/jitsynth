@@ -73,9 +73,9 @@ struct track_t {
 	} param;
 };
 
-#define mutex_lock(t) pthread_mutex_lock(&(t->mutex))
-#define mutex_busy(t) (pthread_mutex_trylock(&(t->mutex)) == EBUSY)
-#define mutex_unlock(t) pthread_mutex_unlock(&(t->mutex))
+#define mutex_lock(t) pthread_mutex_lock(&((t).mutex))
+#define mutex_busy(t) (pthread_mutex_trylock(&((t).mutex)) == EBUSY)
+#define mutex_unlock(t) pthread_mutex_unlock(&((t).mutex))
 
 extern pthread_t player_thread;
 extern void init_player(char *dsp);
