@@ -156,9 +156,9 @@ void add_function(char *name, jit_function_t func) {
 	function_t *t = calloc(1, sizeof(function_t));
 	t->name = name;
 	t->func = func;
-	slist_add(funclist, t);
+	list_add_tail(funclist, funclist, t);
 }
 
 void init_function() {
-	funclist = funclist_new();
+	funclist = list_new(funclist);
 }

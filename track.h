@@ -1,53 +1,21 @@
-extern const jit_nuint note_len_infinity;
+#ifndef _TRACK_H
+#define _TRACK_H
 
-typedef struct instrument_functional_t {
-	jit_function_t func;
-	jit_function_t attack;
-	jit_function_t release;
-	jit_float64 freq,
-				vol,
-				sustain_vol;
-	jit_nuint len,
-			  attack_len,
-			  release_len,
-			  release_start;
-	enum {
-		S_MUTE,
-		S_ATTACK,
-		S_SUSTAIN,
-		S_RELEASE
-	} state;
-} instrument_functional_t;
+#include "common.h"
+#include "player.h"
 
-typedef struct instrument_sampler_t {
-	int count;
-	jit_function_t *func;
-} instrument_sampler_t;
+#include "tracklist.h"
+extern tracklist_t *tracklist;
 
-typedef struct track_t {
-	pthread_mutex_t mutex;
-	jit_nuint sample;
-	jit_float64 volume;
-	enum {
-		T_NULL,
-		T_FUNCTIONAL,
-		T_SAMPLER,
-	} type;
-	union {
-		void *i_nothing;
-		instrument_functional_t *i_functional;
-		instrument_sampler_t *i_sampler; // TODO :)
-	} ptr;
-} track_t;
+extern void tracker_init();
+extern void tracker_destroy();
+extern track_t *track_new(track_type type);
+extern void track_set_source(track_t *t, track_source s);
+extern void track_set_volume(track_t *t, jit_float64 x);
 
-#define MAX_TRACK 100
-extern track_t *tracks[MAX_TRACK];
-extern unsigned tracks_count;
+extern playing_t *track_play_functional(track_t *t, jit_float64 freq, jit_nuint len);
+extern playing_t *track_play_sampler(track_t *t, unsigned id, unsigned loop);
+/* extern void track_playing_delete(plistitem_t *t); */
+extern void track_playing_delete_all(track_t *t);
 
-#define track_lock(t) pthread_mutex_lock(&(t->mutex))
-#define track_busy(t) (pthread_mutex_trylock(&(t->mutex)) == EBUSY)
-#define track_unlock(t) pthread_mutex_unlock(&(t->mutex))
-extern jit_float64 track_get_sample(track_t *t);
-
-extern pthread_t player_thread;
-extern void init_player(char *dsp);
+#endif
