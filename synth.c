@@ -1,5 +1,6 @@
 #include "common.h"
 #include "function.h"
+#include "player.h"
 #include "track.h"
 
 #include <string.h>
@@ -48,6 +49,7 @@ int main(int argc, char **argv) {
 
 	running = true;
 	init_function();
+	tracker_init();
 	if (argc > 1)
 		init_player(strdup(argv[1]));
 	else
@@ -57,7 +59,7 @@ int main(int argc, char **argv) {
 	jit_context_build_start(jit_context);
 	
 	/* This parser sucks, but works. */
-	char *t = token();
+	char *t = token(), *t1;
 	bool parser_ok = false;
 	enum {
 		PC_EXIT,
@@ -86,9 +88,8 @@ int main(int argc, char **argv) {
 				}
 				else if (STREQ(t, "track")) {
 					parser_context = PC_TRACK;
-					tmptrack = calloc(1, sizeof(track_t));
-					LOGF("adding track, track_count=%i", tracks_count);
-					tracks[tracks_count++] = tmptrack;
+					tmptrack = track_new(T_FUNCTIONAL); // TODO
+					track_set_source(tmptrack, S_REALTIME);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "body")) {
@@ -99,36 +100,26 @@ int main(int argc, char **argv) {
 			case PC_TRACK: ;;
 				if (STREQ(t, "volume")) {
 					t = token();
-					track_lock(tmptrack);
-					tmptrack->volume = atof(t)/100.0;
-					track_unlock(tmptrack);
+					track_set_volume(tmptrack, atof(t)/100.0);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "function")) {
 					t = token();
-					track_lock(tmptrack);
-					tmptrack->type = T_FUNCTIONAL;
-					tmptrack->ptr.i_functional = calloc(1, sizeof(instrument_functional_t));
-					tmptrack->ptr.i_functional->func = get_function_by_name(t);
-					track_unlock(tmptrack);
+					track_set_function(tmptrack, get_function_by_name(t));
 					parser_ok = true;
 				}
 				else if (STREQ(t, "attack")) {
 					t = token();
-					track_lock(tmptrack);
-					tmptrack->ptr.i_functional->attack = get_function_by_name(t);
-					t = token();
-					tmptrack->ptr.i_functional->attack_len = atof(t)*RATE;
-					track_unlock(tmptrack);
+					t1 = token();
+					track_set_attack(tmptrack, get_function_by_name(t), atof(t1)*RATE);
+					free(t1);
 					parser_ok = true;
 				}
 				else if (STREQ(t, "release")) {
 					t = token();
-					track_lock(tmptrack);
-					tmptrack->ptr.i_functional->release = get_function_by_name(t);
-					t = token();
-					tmptrack->ptr.i_functional->release_len = atof(t)*RATE;
-					track_unlock(tmptrack);
+					t1 = token();
+					track_set_release(tmptrack, get_function_by_name(t), atof(t1)*RATE);
+					free(t1);
 					parser_ok = true;
 				}
 				else {
@@ -156,13 +147,7 @@ int main(int argc, char **argv) {
 				xcb_key_press_event_t *kp = (xcb_key_press_event_t *)ev;
 				if (kp->detail != last_key) {
 					LOGF("Pressed %i %i", kp->detail, kp->state);	
-					track_lock(tracks[0]);
-					tracks[0]->ptr.i_functional->freq = note_freq(kp->detail-20);
-					tracks[0]->ptr.i_functional->len = note_len_infinity;
-					tracks[0]->ptr.i_functional->state = S_ATTACK;
-					tracks[0]->sample = 0;
-					track_unlock(tracks[0]);
-					
+					track_play_functional(tracklist->head->data, note_freq(kp->detail-20), note_len_infinity);
 					last_key = kp->detail;
 				}
 
@@ -170,11 +155,9 @@ int main(int argc, char **argv) {
 			case XCB_KEY_RELEASE: ;;
 				xcb_key_release_event_t *kr = (xcb_key_release_event_t *)ev;
 				LOGF("Released %i %i", kr->detail, kr->state);
-				track_lock(tracks[0]);
-				tracks[0]->ptr.i_functional->state = S_RELEASE;
-				tracks[0]->ptr.i_functional->release_start = tracks[0]->sample;
-				track_unlock(tracks[0]);
 				
+				track_playing_release_all(tracklist->head->data);
+
 				last_key = 0;
 				break;
 

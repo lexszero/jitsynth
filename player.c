@@ -8,8 +8,9 @@ const jit_nuint note_len_infinity = -1;
 
 static int fd;
 
-jit_float64 get_sample(playing_t *t) {
+jit_float64 get_sample(plistitem_t *pt) {
 	jit_float64 result;
+	playing_t *t = pt->data;
 	if (mutex_busy(t)) {
 		LOGF("playing %p busy", t);
 		return 0;
@@ -43,7 +44,7 @@ jit_float64 get_sample(playing_t *t) {
 						fst->vol = fst->sustain_vol*result;
 						if (release_sample >= fp->release_len) {
 							LOGF("mute1");
-							// TODO: delete this playing
+							list_delete(plist, t->track->plist, pt);
 						}
 					}
 					else {
@@ -88,11 +89,12 @@ void * player(void *args) {
 					LOGF("track %p busy", ti->data);
 					continue;
 				}
-				else 
+				else {
 					list_foreach(ti->data->plist, pi) {
-						sample += get_sample(pi->data) * ti->data->volume;
+						sample += get_sample(pi) * ti->data->volume;
 					}
 					mutex_unlock(ti->data);
+				}
 			}
 			buf[j] = sample * 65535;
 		}

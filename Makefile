@@ -3,9 +3,9 @@ LDFLAGS += -lm -ljit -lxcb -lX11 -lX11-xcb
 
 all: synth
 
-synth: synth.o function.o player.o util.o
+synth: synth.o function.o player.o track.o util.o
 
-synth.o: synth.c common.h player.h function.h
+synth.o: synth.c common.h player.h track.h function.h
 
 util.o: util.c common.h
 
