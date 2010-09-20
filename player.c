@@ -1,6 +1,7 @@
 #include "common.h"
 #include "function.h"
 #include "track.h"
+#include <sys/time.h>
 #include <sys/soundcard.h>
 #include <sys/ioctl.h>
 
@@ -74,14 +75,17 @@ jit_float64 get_sample(plistitem_t *pt) {
 }
 
 void * player(void *args) {
-	const size_t buf_size = 512;
+	const size_t buf_size = 256;
 	uint16_t buf[buf_size];
 	jit_float64 sample;
 	unsigned j;
 	LOGF("player thread started");
 	tracklistitem_t *ti;
 	plistitem_t *pi, *pni;
+	struct timeval tv1, tv2;
+	unsigned usec;
 	while (running) {
+		gettimeofday(&tv1, NULL);
 		for (j = 0; j < buf_size; j++) {
 			sample = 0;
 			list_foreach(tracklist, ti) {
@@ -99,6 +103,11 @@ void * player(void *args) {
 			buf[j] = sample * 65535;
 		}
 		write(fd, &buf, sizeof(uint16_t)*buf_size); 
+
+		gettimeofday(&tv2, NULL);
+		usec = tv2.tv_usec - tv1.tv_usec;
+		if (usec > 1000000/RATE*buf_size)
+			LOGF("Get out of realtime: %u usec", usec);
 	}
 	LOGF("player thread finished");
 	close(fd);

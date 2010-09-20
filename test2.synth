@@ -51,7 +51,7 @@ function envelope_down
 function envelope_updown.1
 	_triangle 15 X
 
-track volume 100 function organ attack envelope_updown.1 0.05 release envelope_down 1
+track volume 30 function organ attack envelope_updown.1 0.05 release envelope_down 1
 body
 
 
