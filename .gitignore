@@ -1,4 +1,6 @@
 *.o
 *.swp
 funclist.h
+tracklist.h
+plist.h
 synth
