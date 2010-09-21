@@ -10,7 +10,7 @@ const jit_nuint note_len_infinity = -1;
 static int fd;
 
 jit_float64 get_sample(plistitem_t *pt) {
-	jit_float64 result;
+	jit_float64 result = 0;
 	playing_t *t = &(pt->data);
 	if (mutex_busy(*t)) {
 		LOGF("playing %p busy", t);
@@ -74,10 +74,10 @@ jit_float64 get_sample(plistitem_t *pt) {
 	return result;
 }
 
-void * player(void *args) {
+void * player() {
 	const size_t buf_size = 256;
 	uint16_t buf[buf_size];
-	jit_float64 sample;
+	jit_float64 sample, track_sample;
 	unsigned j;
 	LOGF("player thread started");
 	tracklistitem_t *ti;
@@ -94,15 +94,20 @@ void * player(void *args) {
 					continue;
 				}
 				else {
+					track_sample = 0;
 					list_foreach_safe(ti->data.plist, pi, pni, {
-						sample += get_sample(pi) * ti->data.volume;
+						track_sample += get_sample(pi);
 					});
+					sample += track_sample * ti->data.volume;
 					mutex_unlock(ti->data);
 				}
 			}
 			buf[j] = sample * 65535;
 		}
-		write(fd, &buf, sizeof(uint16_t)*buf_size); 
+		if (write(fd, &buf, sizeof(uint16_t)*buf_size) == 0) {
+			LOGF("Write failed");
+			break;
+		}
 
 		gettimeofday(&tv2, NULL);
 		usec = tv2.tv_usec - tv1.tv_usec;

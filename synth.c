@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 		PC_TRACK,
 		PC_FUNCTION
 	} parser_context = PC_MAIN;
-	track_t *tmptrack;
+	track_t *tmptrack = NULL;
 	do {
 		if (t[0] == '#') continue;
 		parser_ok = false;
@@ -76,14 +76,6 @@ int main(int argc, char **argv) {
 			case PC_MAIN: ;;
 				if (STREQ(t, "function")) {
 					parser_context = PC_FUNCTION;
-					t = token();
-					LOGF("found function %s", t);
-					jit_function_t tmpfunc = parse_function();
-					if (tmpfunc) 
-						add_function(strdup(t), tmpfunc);
-					else
-						LOGF("function '%s' parse failed", t);
-					parser_context = PC_MAIN;
 					parser_ok = true;
 				}
 				else if (STREQ(t, "track")) {
@@ -127,6 +119,18 @@ int main(int argc, char **argv) {
 					parser_context = PC_MAIN;
 				}
 				break;
+			case PC_FUNCTION: ;;
+				LOGF("found function %s", t);
+				jit_function_t tmpfunc = parse_function();
+				if (tmpfunc)
+					add_function(strdup(t), tmpfunc);
+				else
+					LOGF("function '%s' parse failed", t);
+				parser_context = PC_MAIN;
+				parser_ok = true;
+				break;
+			case PC_EXIT: ;;
+				break;
 		}
 
 		free(t);
@@ -140,7 +144,7 @@ int main(int argc, char **argv) {
 	/* HOLY VERBOSE XCB SHIT! */
 	xcb_connection_t *xcb_conn = XGetXCBConnection(xcb_start());
 	xcb_generic_event_t *ev;
-	xcb_keycode_t last_key;
+	xcb_keycode_t last_key = 0;
 	while ((ev = xcb_wait_for_event(xcb_conn)) != NULL) {
 		switch (ev->response_type & ~0x80) {
 			case XCB_KEY_PRESS: ;;

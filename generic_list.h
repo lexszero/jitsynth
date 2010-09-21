@@ -10,6 +10,8 @@
 #define list_free(type, name) type##_free(name)
 #endif
 
+#define _unused __attribute__((unused))
+
 typedef struct NAMEitem_t {
 	TYPE data;
 	struct NAMEitem_t *next, *prev;
@@ -19,12 +21,12 @@ typedef struct NAME_t {
 	NAMEitem_t *head, *tail;
 } NAME_t;
 
-static NAME_t * NAME_new() {
+static _unused NAME_t * NAME_new() {
 	NAME_t *t = calloc(1, sizeof(NAME_t));
 	return t;
 }
 
-static NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
+static _unused NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
 	assert(t);
 
 	NAMEitem_t *item = calloc(1, sizeof(NAMEitem_t));
@@ -43,7 +45,7 @@ static NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
 	return item;
 }
 
-static NAMEitem_t * NAME_add_tail(NAME_t *t, TYPE data) {
+static _unused NAMEitem_t * NAME_add_tail(NAME_t *t, TYPE data) {
 	assert(t);
 
 	NAMEitem_t *item = calloc(1, sizeof(NAMEitem_t));
@@ -62,7 +64,7 @@ static NAMEitem_t * NAME_add_tail(NAME_t *t, TYPE data) {
 	return item;
 }
 
-static void NAME_delete(NAME_t *t, NAMEitem_t *item) {
+static _unused void NAME_delete(NAME_t *t, NAMEitem_t *item) {
 	assert(t);
 	assert(item);
 
@@ -79,8 +81,10 @@ static void NAME_delete(NAME_t *t, NAMEitem_t *item) {
 	LOGF("delete");
 }
 
-static void NAME_free(NAME_t *t) {
+static _unused void NAME_free(NAME_t *t) {
 	NAMEitem_t *cur;
 	for (cur = t->head; cur; cur = cur->next, free(cur));
 	free(t);
 }
+
+#undef _unused
