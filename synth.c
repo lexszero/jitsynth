@@ -13,12 +13,13 @@ int main(int argc, char **argv) {
 	running = true;
 	init_function();
 	tracker_init();
-	xface_init();
 	
 	if (argc > 1)
 		init_player(strdup(argv[1]));
 	else
 		init_player(NULL);
+	
+	xface_init();
 
 	jit_context = jit_context_create();
 	jit_context_build_start(jit_context);
@@ -61,9 +62,15 @@ int main(int argc, char **argv) {
 					parser_ok = true;
 				}
 				else if (STREQ(t, "function")) {
-					t = token();
-					track_set_function(tmptrack, get_function_by_name(t));
-					parser_ok = true;
+					if (! tmptrack->param.p_functional.func) {
+						t = token();
+						track_set_function(tmptrack, get_function_by_name(t));
+						parser_ok = true;
+					}
+					else {
+						parser_ok = false;
+						parser_context = PC_MAIN;
+					}
 				}
 				else if (STREQ(t, "attack")) {
 					t = token();
@@ -103,13 +110,14 @@ int main(int argc, char **argv) {
 			break;
 		if (parser_ok)
 			t = token();
+		if (!t)
+			break;
 	} while (parser_ok);
-	jit_context_build_end(jit_context);
 
-	xface_main();
-	running = false;
+//	running = false;
 	
-	xface_destroy();
+	while (1) pause();
+	jit_context_build_end(jit_context);
 	jit_context_destroy(jit_context);
 	return 0;
 }

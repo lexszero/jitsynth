@@ -1,4 +1,4 @@
-CFLAGS += -O3 -Wall -Wextra -std=c99
+CFLAGS += -O0 -ggdb -Wall -Wextra -std=c99
 LDFLAGS += -lm -ljit -lxcb -lX11 -lX11-xcb
 
 all: synth

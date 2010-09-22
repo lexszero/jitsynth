@@ -77,6 +77,8 @@ plistitem_t *track_play_functional(track_t *t, jit_float64 freq, jit_nuint len) 
 	memset(&p, 0, sizeof(playing_t));
 	p.track = t;
 	p.state.functional.state = S_ATTACK;
+	if (! t->param.p_functional.attack)
+		p.state.functional.vol = 1;
 	p.state.functional.sample = 0;
 	p.state.functional.freq = freq;
 	p.state.functional.len = len;

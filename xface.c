@@ -10,7 +10,9 @@ static void kill_autorepeat(Display *dis) {
 	XFlush(dis);
 }
 
-void xface_init() {
+void *xface() {
+	LOGF("xface thread started");
+	
 	Display *dis = XOpenDisplay(NULL);
 	xcb_conn = XGetXCBConnection(dis);
 	const xcb_setup_t *xcb_setup = xcb_get_setup(xcb_conn);
@@ -34,29 +36,35 @@ void xface_init() {
 	
 	kill_autorepeat(dis);
 
-	keylist = list_new(keylist);
-}
-
-void xface_main() {
 	xcb_generic_event_t *ev;
 	keydown_t keydown;
+	keylistitem_t *ki, *kni;
 	while ((ev = xcb_wait_for_event(xcb_conn)) != NULL) {
 		switch (ev->response_type & ~0x80) {
 			case XCB_KEY_PRESS: ;;
 				xcb_key_press_event_t *kp = (xcb_key_press_event_t *)ev;
 				LOGF("Pressed %i %i", kp->detail, kp->state);
 				
-				keydown.key = kp->detail;
-				keydown.data.pitem = track_play_functional(&(tracklist->head->data), note_freq(kp->detail-20), note_len_infinity);
-				
-				list_add_tail(keylist, keylist, keydown);
+				bool already_pressed = false;
+				list_foreach(keylist, ki) {
+					if (ki->data.key == kp->detail) {
+						already_pressed = true;
+						break;
+					}
+				}
+				if (already_pressed) break;
+				if (tracklist->head) {
+					keydown.key = kp->detail;
+					keydown.data.pitem = track_play_functional(&(tracklist->head->data), note_freq(kp->detail-20), note_len_infinity);
+					
+					list_add_tail(keylist, keylist, keydown);
+				}
 
 				break;
 			case XCB_KEY_RELEASE: ;;
 				xcb_key_release_event_t *kr = (xcb_key_release_event_t *)ev;
 				LOGF("Released %i %i", kr->detail, kr->state);
 				
-				keylistitem_t *ki, *kni;
 				list_foreach_safe(keylist, ki, kni, {
 					if (ki->data.key == kr->detail) {
 						playing_release(ki->data.data.pitem);
@@ -65,14 +73,23 @@ void xface_main() {
 				});
 
 				break;
-
 		}
-
 	}
 
+	xcb_disconnect(xcb_conn);
+	LOGF("xface thread finished");
+	running = false;
+	return NULL;
 }
 
-void xface_destroy() {
-	xcb_disconnect(xcb_conn);
+pthread_t xface_thread;
+
+void xface_init() {
+	keylist = list_new(keylist);
+
+	if (pthread_create(&xface_thread, NULL, xface, NULL) != 0) {
+		LOGF("xface thread creation failed");
+		return;
+	}
 	list_free(keylist, keylist);
 }

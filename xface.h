@@ -18,6 +18,5 @@ typedef struct {
 #include "keylist.h"
 keylist_t *keylist;
 
+extern pthread_t xface_thread;
 extern void xface_init();
-extern void xface_main();
-extern void xface_destroy();

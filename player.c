@@ -43,15 +43,11 @@ jit_float64 get_sample(plistitem_t *pt) {
 						args[2] = &(fp->release_len);
 						jit_function_apply(fp->release, args, &(result));
 						fst->vol = fst->sustain_vol*result;
-						if (release_sample >= fp->release_len) {
-							LOGF("mute1");
-							list_delete(plist, t->track->plist, pt);
-						}
+						if (release_sample >= fp->release_len)
+							t->delete_me = true;
 					}
-					else {
-						LOGF("mute2");
-						// TODO: delete this playing
-					}
+					else
+						t->delete_me = true;
 				}
 
 				args[1] = &(fst->sample);
@@ -101,6 +97,10 @@ void * player() {
 					track_sample = 0;
 					list_foreach_safe(ti->data.plist, pi, pni, {
 						track_sample += get_sample(pi);
+						if (pi->data.delete_me) {
+							LOGF("deleting finished playing");
+							list_delete(plist, ti->data.plist, pi);
+						}
 					});
 					sample += track_sample * ti->data.volume;
 					mutex_unlock(ti->data);
