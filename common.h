@@ -22,6 +22,10 @@
 #define STRNEQ(a, b, n) (strncmp(a, b, n) == 0)
 #define STREQ(a, b) (strcmp(a, b) == 0)
 
+#define mutex_lock(t) { LOGF("locking"); pthread_mutex_lock(&((t).mutex)); }
+#define mutex_busy(t) (pthread_mutex_trylock(&((t).mutex)) == EBUSY)
+#define mutex_unlock(t) pthread_mutex_unlock(&((t).mutex));
+
 extern bool running;
 
 extern jit_context_t jit_context;

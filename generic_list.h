@@ -18,6 +18,7 @@ typedef struct NAMEitem_t {
 } NAMEitem_t;
 
 typedef struct NAME_t {
+	pthread_mutex_t mutex; 
 	NAMEitem_t *head, *tail;
 } NAME_t;
 
@@ -29,6 +30,7 @@ static _unused NAME_t * NAME_new() {
 static _unused NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
 	assert(t);
 
+	mutex_lock(*t);
 	NAMEitem_t *item = calloc(1, sizeof(NAMEitem_t));
 	item->data = data;
 
@@ -41,6 +43,7 @@ static _unused NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
 	if (! t->tail)
 		t->tail = item;
 
+	mutex_unlock(*t);
 	LOGF("add head=%p", t->head);
 	return item;
 }
@@ -48,6 +51,7 @@ static _unused NAMEitem_t * NAME_add_head(NAME_t *t, TYPE data) {
 static _unused NAMEitem_t * NAME_add_tail(NAME_t *t, TYPE data) {
 	assert(t);
 
+	mutex_lock(*t);
 	NAMEitem_t *item = calloc(1, sizeof(NAMEitem_t));
 	item->data = data;
 
@@ -60,6 +64,7 @@ static _unused NAMEitem_t * NAME_add_tail(NAME_t *t, TYPE data) {
 	if (! t->head)
 		t->head = item;
 
+	mutex_unlock(*t);
 	LOGF("add tail=%p", t->head);
 	return item;
 }
@@ -68,6 +73,7 @@ static _unused void NAME_delete(NAME_t *t, NAMEitem_t *item) {
 	assert(t);
 	assert(item);
 
+	mutex_lock(*t);
 	if (t->head == item)
 		t->head = item->next;
 	if (t->tail == item)
@@ -78,12 +84,15 @@ static _unused void NAME_delete(NAME_t *t, NAMEitem_t *item) {
 		item->prev->next = item->next;
 	free(item);
 
-	LOGF("delete");
+	mutex_unlock(*t);
+	LOGF("deleted");
 }
 
 static _unused void NAME_free(NAME_t *t) {
 	NAMEitem_t *cur;
+	mutex_lock(*t);
 	for (cur = t->head; cur; cur = cur->next, free(cur));
+	mutex_unlock(*t);
 	free(t);
 }
 
