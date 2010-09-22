@@ -6,9 +6,33 @@
 
 #include <string.h>
 
+#include <signal.h>
+#include <execinfo.h>
+
 bool running;
 jit_context_t jit_context;
+
+void signal_sigsegv() {
+#define BT_SIZE 100
+	int j, nptrs;
+    void *buffer[BT_SIZE];
+	char **strings;
+
+	nptrs = backtrace(buffer, BT_SIZE);
+	strings = backtrace_symbols(buffer, nptrs);
+
+	if (strings == NULL)
+		perror("backtrace_symbols");
+
+	for (j = 0; j < nptrs; j++)
+		LOGF("%s", strings[j]);
+
+	free(strings);
+#undef BT_SIZE
+}
+
 int main(int argc, char **argv) {
+	signal(SIGSEGV, signal_sigsegv);
 
 	running = true;
 	init_function();
