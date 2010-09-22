@@ -66,54 +66,61 @@ void track_set_release(track_t *t, jit_function_t func, jit_nuint len) {
 }
 /* end of ROBOWORKZ */
 
-playing_t *track_play_functional(track_t *t, jit_float64 freq, jit_nuint len) {
+plistitem_t *track_play_functional(track_t *t, jit_float64 freq, jit_nuint len) {
 	if (t->type != T_FUNCTIONAL) {
 		LOGF("Trying to play functional in incomplatible track");
 		return NULL;
 	}
 	mutex_lock(*t);
-	playing_t p, *pp;
+	playing_t p;
+	plistitem_t *pp;
 	memset(&p, 0, sizeof(playing_t));
 	p.track = t;
 	p.state.functional.state = S_ATTACK;
 	p.state.functional.sample = 0;
 	p.state.functional.freq = freq;
 	p.state.functional.len = len;
-	pp = &(list_add_tail(plist, t->plist, p)->data);
+	pp = list_add_tail(plist, t->plist, p);
 	mutex_unlock(*t);
 	return pp;
 }
 
-playing_t *track_play_sampler(track_t *t, unsigned id, unsigned loop) {
+plistitem_t *track_play_sampler(track_t *t, unsigned id, unsigned loop) {
 	if (t->type != T_SAMPLER) {
 		LOGF("Trying to play sampler in incomplatible track");
 		return NULL;
 	}
 	mutex_lock(*t);
-	playing_t p, *pp;
+	playing_t p;
+	plistitem_t *pp;
 	memset(&p, 0, sizeof(playing_t));
 	p.track = t;
 	p.state.sampler.id = id;
 	p.state.sampler.loop = loop;
-	pp = &(list_add_tail(plist, t->plist, p)->data);
+	pp = list_add_tail(plist, t->plist, p);
 	mutex_unlock(*t);
 	return pp;
 }
 
+void playing_release(plistitem_t *t) {
+	track_t *tr = t->data.track;
+	mutex_lock(*tr);
+	if (tr->type != T_FUNCTIONAL)  {
+		LOGF("can't release non-functional track, delete playing");
+		list_delete(plist, tr->plist, t);
+	}
+	else {
+		t->data.state.functional.state = S_RELEASE;
+		t->data.state.functional.release_start = t->data.state.functional.sample;
+	}
+	mutex_unlock(*tr);
+}
+
 void track_playing_release_all(track_t *t) {
-	if (t->type != T_FUNCTIONAL) {
-		LOGF("releasing not implemented");
-		return;
-	}
-	mutex_lock(*t);
-	plistitem_t *cur;
-	list_foreach(t->plist, cur) {
-		if (cur->data.state.functional.state != S_RELEASE) {
-			cur->data.state.functional.state = S_RELEASE;
-			cur->data.state.functional.release_start = cur->data.state.functional.sample;
-		}
-	}
-	mutex_unlock(*t);
+	plistitem_t *cur, *nc;
+	list_foreach_safe(t->plist, cur, nc, {
+		playing_release(cur);
+	});
 }
 
 void track_playing_delete_all(track_t *t) {

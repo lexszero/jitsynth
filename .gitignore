@@ -3,4 +3,5 @@
 funclist.h
 tracklist.h
 plist.h
+keylist.h
 synth

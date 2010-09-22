@@ -82,10 +82,14 @@ void * player() {
 	LOGF("player thread started");
 	tracklistitem_t *ti;
 	plistitem_t *pi, *pni;
+#ifdef DEBUG_PROFILE
 	struct timeval tv1, tv2;
 	unsigned usec;
+#endif
 	while (running) {
+#ifdef DEBUG_PROFILE
 		gettimeofday(&tv1, NULL);
+#endif
 		for (j = 0; j < buf_size; j++) {
 			sample = 0;
 			list_foreach(tracklist, ti) {
@@ -109,10 +113,12 @@ void * player() {
 			break;
 		}
 
+#ifdef DEBUG_PROFILE
 		gettimeofday(&tv2, NULL);
 		usec = tv2.tv_usec - tv1.tv_usec;
 		if (usec > 1000000/RATE*buf_size)
 			LOGF("Get out of realtime: %u usec", usec);
+#endif
 	}
 	LOGF("player thread finished");
 	close(fd);
