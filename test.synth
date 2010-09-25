@@ -78,4 +78,4 @@ function envelope_down
 			LEN
 
 
-track volume 40 function shit attack envelope_up 0.05 release envelope_down 0.2
+track volume 20 function shit attack envelope_up 0.05 release envelope_down 0.2

@@ -10,7 +10,6 @@
 #include <execinfo.h>
 
 bool running;
-jit_context_t jit_context;
 
 void signal_sigsegv() {
 #define BT_SIZE 100
@@ -35,19 +34,16 @@ int main(int argc, char **argv) {
 	signal(SIGSEGV, signal_sigsegv);
 
 	running = true;
-	init_function();
+	function_init();
 	tracker_init();
 	
 	if (argc > 1)
-		init_player(strdup(argv[1]));
+		player_init(strdup(argv[1]));
 	else
-		init_player(NULL);
+		player_init(NULL);
 	
 	xface_init();
 
-	jit_context = jit_context_create();
-	jit_context_build_start(jit_context);
-	
 	/* This parser sucks, but works. */
 	char *t = token(), *t1;
 	bool parser_ok = false;
@@ -138,10 +134,6 @@ int main(int argc, char **argv) {
 			break;
 	} while (parser_ok);
 
-//	running = false;
-	
 	while (1) pause();
-	jit_context_build_end(jit_context);
-	jit_context_destroy(jit_context);
 	return 0;
 }

@@ -4,6 +4,7 @@
 #include "funclist.h"
 funclist_t *funclist;
 
+jit_context_t jit_context;
 
 jit_function_t get_function_by_name(char *name) {
 	funclistitem_t *cur;
@@ -160,6 +161,14 @@ void add_function(char *name, jit_function_t func) {
 	list_add_tail(funclist, funclist, t);
 }
 
-void init_function() {
+void function_init() {
 	funclist = list_new(funclist);
+	jit_context = jit_context_create();
+	jit_context_build_start(jit_context);
+}
+
+void function_destroy() {
+	list_free(funclist, funclist);
+	jit_context_build_end(jit_context);
+	jit_context_destroy(jit_context);
 }

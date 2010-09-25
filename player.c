@@ -71,13 +71,14 @@ jit_float64 get_sample(plistitem_t *pt) {
 }
 
 void * player() {
-	const size_t buf_size = 256;
+	const size_t buf_size = 1024;
 	uint16_t buf[buf_size];
 	jit_float64 sample, track_sample;
 	unsigned j;
 	LOGF("player thread started");
 	tracklistitem_t *ti;
 	plistitem_t *pi, *pni;
+
 #ifdef DEBUG_PROFILE
 	struct timeval tv1, tv2;
 	unsigned usec;
@@ -86,19 +87,19 @@ void * player() {
 #ifdef DEBUG_PROFILE
 		gettimeofday(&tv1, NULL);
 #endif
+
 		for (j = 0; j < buf_size; j++) {
 			sample = 0;
 			list_foreach(tracklist, ti) {
 				if (mutex_busy(ti->data)) {
 					LOGF("track %p busy", ti);
-					continue;
 				}
 				else {
 					track_sample = 0;
 					list_foreach_safe(ti->data.plist, pi, pni, {
 						track_sample += get_sample(pi);
 						if (pi->data.delete_me) {
-							LOGF("deleting finished playing");
+							LOGF("deleting playing");
 							list_delete(plist, ti->data.plist, pi);
 						}
 					});
@@ -127,7 +128,7 @@ void * player() {
 
 pthread_t player_thread;
 
-void init_player(char *dsp) {
+void player_init(char *dsp) {
     int i;
 	if (dsp && STREQ(dsp, "-")) {
 		LOGF("output to stdout");
@@ -155,9 +156,3 @@ void init_player(char *dsp) {
 		return;
 	}
 }
-
-void destroy_player() {
-	LOGF("destroying player");
-}
-
-

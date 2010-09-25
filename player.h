@@ -64,6 +64,7 @@ typedef struct {
 
 struct track_t {
 	pthread_mutex_t mutex;
+	unsigned id;
 	plist_t *plist;
 	jit_float64 volume;
 	track_source source;
@@ -75,7 +76,7 @@ struct track_t {
 };
 
 extern pthread_t player_thread;
-extern void init_player(char *dsp);
-extern void destroy_player();
+extern void player_init(char *dsp);
+extern void player_destroy();
 
 #endif

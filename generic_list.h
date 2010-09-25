@@ -1,6 +1,6 @@
-#ifndef ADT_SLIST
+#ifndef ADT_LIST
 
-#define ADT_SLIST
+#define ADT_LIST
 #define list_new(type) type##_new();
 #define list_add_head(type, name, data) type##_add_head(name, data)
 #define list_add_tail(type, name, data) type##_add_tail(name, data)
