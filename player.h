@@ -60,7 +60,8 @@ typedef struct {
 	char **sample_fn;
 } track_param_sampler_t;
 
-#include "plist.h"
+#include "generic_list.h"
+LIST(plist, playing_t);
 
 struct track_t {
 	pthread_mutex_t mutex;

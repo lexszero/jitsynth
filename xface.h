@@ -15,7 +15,8 @@ typedef struct {
 	} data;
 } keydown_t;
 
-#include "keylist.h"
+#include "generic_list.h"
+LIST(keylist, keydown_t);
 keylist_t *keylist;
 
 extern pthread_t xface_thread;

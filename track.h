@@ -4,7 +4,8 @@
 #include "common.h"
 #include "player.h"
 
-#include "tracklist.h"
+#include "generic_list.h"
+LIST(tracklist, track_t);
 extern tracklist_t *tracklist;
 
 extern void tracker_init();

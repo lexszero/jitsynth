@@ -1,7 +1,8 @@
 #include "common.h"
 #include "function.h"
 
-#include "funclist.h"
+#include "generic_list.h"
+LIST(funclist, function_t);
 funclist_t *funclist;
 
 jit_context_t jit_context;
